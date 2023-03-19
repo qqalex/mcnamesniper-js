@@ -72,7 +72,7 @@ func queueSnipe(username string, bearerTokens []string, startTime int64, stopTim
 func main() {
 	usernamePtr := flag.String("username", "", "Minecraft username")
 	startTimePtr := flag.Int64("start-time", 0, "Unix timestamp to start sniping")
-	durationPtr := flag.Duration("duration", 0, "Duration to snipe")
+	stopTimePtr := flag.Int64("stop-time", 0, "Unix timestamp to stop sniping")
 	bearerTokensPtr := flag.String("tokens", "", "JSON array of bearer tokens")
 	proxyURLPtr := flag.String("proxy-url", "", "Proxy URL")
 	threadsPtr := flag.Int("threads", 1, "Number of concurrent connections")
@@ -87,8 +87,8 @@ func main() {
 		log.Fatal("Start time must be specified")
 	}
 
-	if *durationPtr == 0 {
-		log.Fatal("Duration must be specified")
+	if *stopTimePtr == 0 {
+		log.Fatal("Stop time must be specified")
 	}
 
 	bearerTokens := BearerTokens{}
@@ -102,6 +102,5 @@ func main() {
 		log.Fatalf("Error parsing proxy URL: %s", err)
 	}
 
-	stopTime := time.Now().Unix() + int64(*durationPtr)
-	queueSnipe(*usernamePtr, bearerTokens.Tokens, *startTimePtr, stopTime, proxyURL, *threadsPtr)
+	queueSnipe(*usernamePtr, bearerTokens.Tokens, *startTimePtr, *stopTimePtr, proxyURL, *threadsPtr)
 }
