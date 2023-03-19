@@ -1,13 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"log"
 	"math/rand"
 	"net"
 	"net/url"
-	"os"
 	"time"
 
 	"github.com/valyala/fasthttp"
@@ -17,7 +17,7 @@ type BearerTokens struct {
 	Tokens []string `json:"tokens"`
 }
 
-func queueSnipe(username string, bearerTokens []string, startTime int64, stopTime int64, proxyURL *url.URL) {
+func queueSnipe(username string, bearerTokens []string, startTime int64, stopTime int64, proxyURL *url.URL, numWorkers int) {
 	dialer := &net.Dialer{
 		Timeout:   time.Second * 5,
 		KeepAlive: time.Second * 10,
@@ -27,77 +27,81 @@ func queueSnipe(username string, bearerTokens []string, startTime int64, stopTim
 		Dial: func(addr string) (net.Conn, error) {
 			return dialer.Dial("tcp", proxyURL.Host)
 		},
+		MaxConnsPerHost: numWorkers,
 	}
 
-	url := "https://api.minecraftservices.com/minecraft/profile/"
+	urlBuf := bytes.NewBufferString("https://api.minecraftservices.com/minecraft/profile/")
+
+	workerCh := make(chan struct{}, numWorkers)
 
 	for time.Now().Unix() < startTime {
 		time.Sleep(time.Millisecond * 50)
 	}
 
 	for time.Now().Unix() < stopTime {
+		token := bearerTokens[rand.Intn(len(bearerTokens))]
+
+		workerCh <- struct{}{}
 		go func() {
-			token := bearerTokens[rand.Intn(len(bearerTokens))]
+			defer func() {
+				<-workerCh
+			}()
 
 			req := fasthttp.AcquireRequest()
-			defer fasthttp.ReleaseRequest(req)
+			resp := fasthttp.AcquireResponse()
+
+			defer func() {
+				fasthttp.ReleaseRequest(req)
+				fasthttp.ReleaseResponse(resp)
+			}()
 
 			req.Header.SetMethod("POST")
-			req.Header.SetRequestURI(url)
+			req.SetRequestURIBytes(urlBuf.Bytes())
 
 			req.Header.Set("Authorization", "Bearer "+token)
 			req.Header.Set("Content-Type", "application/json")
 			req.Header.Set("profileName", username)
 
-			resp := fasthttp.AcquireResponse()
-			defer fasthttp.ReleaseResponse(resp)
-
-			if err := client.DoTimeout(req, resp, time.Second*5); err != nil {
+			if err := client.DoTimeout(req, resp, 0); err != nil {
 				log.Printf("Error occurred: %s\n", err)
 			}
 		}()
-
-		time.Sleep(time.Second * 10)
 	}
 }
 
 func main() {
 	usernamePtr := flag.String("username", "", "Minecraft username")
-	startTimePtr := flag.Int64("start-time", 0, "Start time as Unix time")
-	stopTimePtr := flag.Int64("stop-time", 0, "Stop time as Unix time")
-	proxyURLPtr := flag.String("proxy-url", "", "Proxy URL in the format 'http://username:password@website.com:yourproxyport'")
-	bearerTokensFilePtr := flag.String("bearer-tokens-file", "", "Path to JSON file containing bearer tokens")
+	startTimePtr := flag.Int64("start-time", 0, "Unix timestamp to start sniping")
+	durationPtr := flag.Duration("duration", 0, "Duration to snipe")
+	bearerTokensPtr := flag.String("tokens", "", "JSON array of bearer tokens")
+	proxyURLPtr := flag.String("proxy-url", "", "Proxy URL")
+	threadsPtr := flag.Int("threads", 1, "Number of concurrent connections")
 
 	flag.Parse()
 
-	// Check if required arguments are missing
-	if *usernamePtr == "" || *startTimePtr == 0 || *stopTimePtr == 0 || *proxyURLPtr == "" || *bearerTokensFilePtr == "" {
-		flag.Usage()
-		os.Exit(1)
+	if *usernamePtr == "" {
+		log.Fatal("Username cannot be empty")
 	}
 
-	// Parse start time and stop time
-	startTime := *startTimePtr
-	stopTime := *stopTimePtr
+	if *startTimePtr == 0 {
+		log.Fatal("Start time must be specified")
+	}
 
-	// Parse proxy URL
+	if *durationPtr == 0 {
+		log.Fatal("Duration must be specified")
+	}
+
+	bearerTokens := BearerTokens{}
+	err := json.Unmarshal([]byte(*bearerTokensPtr), &bearerTokens)
+	if err != nil {
+		log.Fatalf("Error unmarshalling bearer tokens: %s", err)
+	}
+
 	proxyURL, err := url.Parse(*proxyURLPtr)
 	if err != nil {
 		log.Fatalf("Error parsing proxy URL: %s", err)
 	}
 
-	// Read bearer tokens from JSON file
-	bearerTokensFile, err := os.Open(*bearerTokensFilePtr)
-	if err != nil {
-		log.Fatalf("Error opening bearer tokens file: %s", err)
-	}
-	defer bearerTokensFile.Close()
-
-	var bearerTokens BearerTokens
-	err = json.NewDecoder(bearerTokensFile).Decode(&bearerTokens)
-	if err != nil {
-		log.Fatalf("Error decoding bearer tokens file: %s", err)
-	}
-
-	queueSnipe(*usernamePtr, bearerTokens.Tokens, startTime, stopTime, proxyURL)
+	stopTime := time.Now().Unix() + int64(*durationPtr)
+	queueSnipe(*usernamePtr, bearerTokens.Tokens, *startTimePtr, stopTime, proxyURL, *threadsPtr)
 }
