@@ -9,7 +9,7 @@ A Minecraft namesniper that uses Microsoft "gamepass" accounts to catch dropping
 ## NODE DB (Storage)
 - NoSQL JSON DB
 - Store
-- - usernames
+- - username
 - - start-time
 - - stop-time
 - - uuid
