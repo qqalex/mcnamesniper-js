@@ -4,7 +4,9 @@ A Minecraft namesniper that uses Microsoft "gamepass" accounts to catch dropping
 - Asynchronous
 
 ## NODE API (Control)
-- 
+- /queue
+- /dequeue
+- /store
 
 ## NODE DB (Storage)
 - NoSQL JSON DB
@@ -17,4 +19,3 @@ A Minecraft namesniper that uses Microsoft "gamepass" accounts to catch dropping
 ## NODE DISCORD BOT (Command)
 - /queue
 - /dequeue
-- 
