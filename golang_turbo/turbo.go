@@ -1,74 +1,103 @@
-// Send api requests to Microsoft's Minecraft API to create a new profile on a Microsoft gamepass account.
-// Using Golang's fast http to send requests as fast as possible.
-// We are using rotating proxies in the format "username:password@url"; the proxies can only send as many requests "concurrently".
-// Currently we can only send 100 requests "concurrently".
-// Since we are using proxies don't worry about getting banned, we want to be able to send as many requests as possible.
-
-// We are writing a name sniper so speed is `critical` to beat out the other name snipers.
-
-// Functions
-// ** Load Bearer tokens
-// ** Send requests
-//
-
 package main
 
 import (
-	"bufio"
-	"fmt"
-	"net/http"
+	"encoding/json"
+	"flag"
+	"log"
+	"math/rand"
+	"net"
 	"net/url"
 	"os"
-	"sync"
+	"time"
+
+	"github.com/valyala/fasthttp"
 )
 
-func sendRequests(wg *sync.WaitGroup, client *http.Client, url string, bearerToken string) {
-	defer wg.Done()
-	req, err := http.NewRequest("PUT", url, nil)
-	if err != nil {
-		fmt.Printf("Error creating request: %v\n", err)
-		return
+type BearerTokens struct {
+	Tokens []string `json:"tokens"`
+}
+
+func queueSnipe(username string, bearerTokens []string, startTime int64, stopTime int64, proxyURL *url.URL) {
+	dialer := &net.Dialer{
+		Timeout:   time.Second * 5,
+		KeepAlive: time.Second * 10,
 	}
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", bearerToken))
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Printf("Error sending request: %v\n", err)
-		return
+
+	client := &fasthttp.Client{
+		Dial: func(addr string) (net.Conn, error) {
+			return dialer.Dial("tcp", proxyURL.Host)
+		},
 	}
-	defer resp.Body.Close()
+
+	url := "https://api.minecraftservices.com/minecraft/profile/"
+
+	for time.Now().Unix() < startTime {
+		time.Sleep(time.Millisecond * 50)
+	}
+
+	for time.Now().Unix() < stopTime {
+		go func() {
+			token := bearerTokens[rand.Intn(len(bearerTokens))]
+
+			req := fasthttp.AcquireRequest()
+			defer fasthttp.ReleaseRequest(req)
+
+			req.Header.SetMethod("POST")
+			req.Header.SetRequestURI(url)
+
+			req.Header.Set("Authorization", "Bearer "+token)
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("profileName", username)
+
+			resp := fasthttp.AcquireResponse()
+			defer fasthttp.ReleaseResponse(resp)
+
+			if err := client.DoTimeout(req, resp, time.Second*5); err != nil {
+				log.Printf("Error occurred: %s\n", err)
+			}
+		}()
+
+		time.Sleep(time.Second * 10)
+	}
 }
 
 func main() {
-	maxThreads := 100
-	proxyUrl, _ := url.Parse("http://minecat:5d86f4-e1a8a9-a211fd-5f7e38-23741a@usa.rotating.proxyrack.net:9000")
-	var bearerTokens []string
-	file, err := os.Open("bearer_tokens.txt")
+	usernamePtr := flag.String("username", "", "Minecraft username")
+	startTimePtr := flag.Int64("start-time", 0, "Start time as Unix time")
+	stopTimePtr := flag.Int64("stop-time", 0, "Stop time as Unix time")
+	proxyURLPtr := flag.String("proxy-url", "", "Proxy URL in the format 'http://username:password@website.com:yourproxyport'")
+	bearerTokensFilePtr := flag.String("bearer-tokens-file", "", "Path to JSON file containing bearer tokens")
+
+	flag.Parse()
+
+	// Check if required arguments are missing
+	if *usernamePtr == "" || *startTimePtr == 0 || *stopTimePtr == 0 || *proxyURLPtr == "" || *bearerTokensFilePtr == "" {
+		flag.Usage()
+		os.Exit(1)
+	}
+
+	// Parse start time and stop time
+	startTime := *startTimePtr
+	stopTime := *stopTimePtr
+
+	// Parse proxy URL
+	proxyURL, err := url.Parse(*proxyURLPtr)
 	if err != nil {
-		fmt.Printf("Error opening bearer tokens file: %v\n", err)
-		return
+		log.Fatalf("Error parsing proxy URL: %s", err)
 	}
-	defer file.Close()
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		bearerTokens = append(bearerTokens, scanner.Text())
+
+	// Read bearer tokens from JSON file
+	bearerTokensFile, err := os.Open(*bearerTokensFilePtr)
+	if err != nil {
+		log.Fatalf("Error opening bearer tokens file: %s", err)
 	}
-	if err := scanner.Err(); err != nil {
-		fmt.Printf("Error reading bearer tokens file: %v\n", err)
-		return
+	defer bearerTokensFile.Close()
+
+	var bearerTokens BearerTokens
+	err = json.NewDecoder(bearerTokensFile).Decode(&bearerTokens)
+	if err != nil {
+		log.Fatalf("Error decoding bearer tokens file: %s", err)
 	}
-	tr := &http.Transport{
-		Proxy: http.ProxyURL(proxyUrl),
-	}
-	client := &http.Client{Transport: tr}
-	wg := sync.WaitGroup{}
-	for i := 0; i > -1; i++ {
-		wg.Add(1)
-		tokenIndex := i % len(bearerTokens)
-		go sendRequests(&wg, client, "https://api.minecraftservices.com/minecraft/profile/", bearerTokens[tokenIndex])
-		if i%maxThreads == 0 {
-			wg.Wait()
-		}
-	}
-	wg.Wait()
-	fmt.Println("Done sending requests.")
+
+	queueSnipe(*usernamePtr, bearerTokens.Tokens, startTime, stopTime, proxyURL)
 }
