@@ -1,32 +1,27 @@
 // Closed source, do not distribute
-// Middleware for internal "Quick Brown Fox" API
+// API for internal "Quick Brown Fox" API
 // Written by Alex "qqalex" of Minecat.NET
 
 
-    // Import modules
+const profileDB = require('./profileDB.js');
+const msaDB = require('./msaDB.js');
+
 const fs = require('fs');
-const data = require('./db.js');
 const https = require('https');
 const express = require('express');
-
-    // Define express app
 const app = express();
 
-    // Creating HTTPS server
+
 const options = {
     key: fs.readFileSync('C:/Users/alex/Documents/apiCert/key.pem'),
     cert: fs.readFileSync('C:/Users/alex/Documents/apiCert/cert.pem')
 }
 const server = https.createServer(options, app);
 
-    // Variables
 const port = 443;
-
-    // Request Auth Token
 const apiAuthToken = 'HGkFWnMyfX8wMACS';
 
 
-    // Functions
 function _authCheck(auth) {
     if (auth === apiAuthToken) {
         return true;
@@ -38,8 +33,8 @@ function _authCheck(auth) {
 
 async function _profileAdd(auth, username, startTime, endTime, res) {
     if (_authCheck(auth)) {
-        let account = new data.profile(username, startTime, endTime);
-        let bool = await data.write(account);
+        const account = new profileDB.profile(username, startTime, endTime);
+        const bool = await profileDB.write(account);
         res.status(200);
         if (bool) {
             res.send(`Profile "${username}" already exists`);
@@ -56,14 +51,14 @@ async function _profileAdd(auth, username, startTime, endTime, res) {
 
 async function _profileRead(auth, username, res) {
     if (_authCheck(auth)) {
-        let bool = await data.read(username);
+        const bool = await profileDB.read(username);
         if (bool) {
             res.status(200);
-            res.send(`Profile "${username}" does not exist`);
+            res.send(bool);
         }
         else {
             res.status(200);
-            res.send(`Profile "${username}" exists`);
+            res.send(`Profile "${username}" does not exist`);
         }
     }
     else {
@@ -73,7 +68,6 @@ async function _profileRead(auth, username, res) {
 }
 
 
-    // Express API routes
 app.post('/profile/add', (req, res) => {
     const auth = req.header('Token');
     const username = req.header('Username');
@@ -90,14 +84,24 @@ app.get('/profile/read', (req, res) => {
     _profileRead(auth, username, res);
 })
 
-app.post('/queue/snipe', (req, res) => {
+app.post('/snipe/add', (req, res) => {
     const auth = req.header('Token');
     const username = req.header('Username');
     const startTime = req.header('Start Time');
     const endTime = req.header('End Time');
     
-    
+    const bearerTokens = msaDB.getValidBearerTokens(endTime);
 })
+
+app.post('/snipe/remove', (req, res) => {
+    const auth = req.header('Token');
+    const username = req.header('Username');
+})
+
+app.post('/snipe/list', (req, res) => {
+    const auth = req.header('Token');
+})
+
 
 server.listen(port, () => {
     console.log(`API started on port ${port}`);
