@@ -3,6 +3,7 @@
 // Written by Alex "qqalex" of Minecat.NET
 
 
+const { exec } = require('child_process');
 const profileDB = require('./profileDB.js');
 const msaDB = require('./msaDB.js');
 
@@ -32,7 +33,11 @@ function _authCheck(auth) {
 }
 
 async function _profileAdd(auth, username, startTime, endTime, res) {
-    if (_authCheck(auth)) {
+    if (!_authCheck(auth)) {
+        res.status(401);
+        res.send('Auth fail');
+    }
+    else {
         const account = new profileDB.profile(username, startTime, endTime);
         const bool = await profileDB.write(account);
         res.status(200);
@@ -43,14 +48,14 @@ async function _profileAdd(auth, username, startTime, endTime, res) {
             res.send(`Profile "${username}" created`);
         }
     }
-    else {
-        res.status(401);
-        res.send('Auth fail');
-    }
 }
 
 async function _profileRead(auth, username, res) {
-    if (_authCheck(auth)) {
+    if (!_authCheck(auth)) {
+        res.status(401);
+        res.send('Auth fail');
+    }
+    else {
         const bool = await profileDB.read(username);
         if (bool) {
             res.status(200);
@@ -61,10 +66,26 @@ async function _profileRead(auth, username, res) {
             res.send(`Profile "${username}" does not exist`);
         }
     }
-    else {
+}
+
+async function _snipeAdd(auth, username, startTime, endTime, res) {
+    if (!_authCheck(auth)) {
         res.status(401);
         res.send('Auth fail');
     }
+    else {
+        const bearerTokens = await msaDB.getValidBearerTokens(endTime);
+        exec(`./turbo --username=${username} --start-time=${startTime} --stop-time=${endTime} --tokens='{${bearerTokens}}' --proxy-url=http://proxy.example.com:8080 --threads=10`)
+    }
+}
+
+async function _msaAdd(email, password, bearerToken, bearerExpiry, gamePassExpiration, res) {
+    const id = await msaDB.numberOfMSA();
+    console.log(id);
+    const msAccount = new msaDB.MSAccount(id, email, password, bearerToken, bearerExpiry, gamePassExpiration);
+    await msaDB.write(msAccount);
+    res.status(200);
+    res.send('MSA Account Added');
 }
 
 
@@ -84,13 +105,30 @@ app.get('/profile/read', (req, res) => {
     _profileRead(auth, username, res);
 })
 
+app.post('/msa/add', (req, res) => {
+    const auth = req.header('Token');
+    const email = req.header('Email');
+    const password = req.header('Password');
+    const bearerToken = req.header('BearerToken');
+    const bearerExpiry = req.header('BearerExpiry'); // unix timestamp
+    const gamePassExpiration = req.header('GamePassExpiration'); // unix timestamp
+
+    if (!_authCheck(auth)) {
+        res.status(401);
+        res.send('Auth fail');
+    }
+    else {
+        _msaAdd(email, password, bearerToken, bearerExpiry, gamePassExpiration, res);
+    }
+})
+
 app.post('/snipe/add', (req, res) => {
     const auth = req.header('Token');
     const username = req.header('Username');
     const startTime = req.header('Start Time');
     const endTime = req.header('End Time');
-    
-    const bearerTokens = msaDB.getValidBearerTokens(endTime);
+
+    _snipeAdd(auth, username, startTime, endTime, res);
 })
 
 app.post('/snipe/remove', (req, res) => {

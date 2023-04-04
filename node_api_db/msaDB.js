@@ -7,6 +7,11 @@ const fs = require('fs').promises;
 const arrayBearerTokens = [];
 
 
+async function numberOfMSA() {
+    const files = await fs.readdir('msaccounts');
+    return files.length+1;
+}
+
 class MSAccount {
     constructor(id, email, password, bearerToken, bearerExpiry, gamePassExpiration) {
         this.id = id;
@@ -49,7 +54,7 @@ async function read(username) {
 
 async function write(profile) {
     const jsonString = JSON.stringify(profile, null, 2);
-    const bool = _check(profile.id)
+    const bool = await _check(profile.id);
     if (bool) {
         return true;
     }
@@ -59,13 +64,9 @@ async function write(profile) {
     }
 }
 
-async function _numberOfMSA() {
-    const files = await fs.readdir('msaccounts');
-    return files.length;
-}
-
 async function _loadBearerTokens() {
-    for (i=0; i<_numberOfMSA(); i++) {
+    const limit = await numberOfMSA();
+    for (i=0; i<limit; i++) {
         const msaAtIndex = await read(i);
         arrayBearerTokens.push(msaAtIndex);
     }
@@ -83,4 +84,4 @@ async function getValidBearerTokens(endTime) {
 }
 
 
-module.exports = { MSAccount, write, read, getValidBearerTokens };
+module.exports = { MSAccount, write, read, getValidBearerTokens, numberOfMSA };
