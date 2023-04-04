@@ -1,21 +1,31 @@
-## GOLANG TURBO 
-A Minecraft namesniper that uses Microsoft "gamepass" accounts to catch dropping usernames.
-- Proxy Dependent
-- Asynchronous
+# quickbrownfox
 
-## NODE API (Control)
-- /queue
-- /dequeue
-- /store
+## Discord Bot (Node)
+> Work in progress!
 
-## NODE DB (Storage)
-- NoSQL JSON DB
-- Store
-- - username
-- - start-time
-- - stop-time
-- - uuid
+## API (Node)
+> Work in progress!
 
-## NODE DISCORD BOT (Command)
-- /queue
-- /dequeue
+## Database (Node)
+
+### Minecraft Profile Database
+> JSON Database that stores arguements
+
+    username
+    start-time
+    stop-time
+    uuid
+
+### Microsoft Account Database
+> JSON Database that stores arguements
+
+    email
+    password
+    bearer-token
+    bearer-expiry
+    gamepass-expiry
+
+## Turbo (Go)
+>A Minecraft namesniper that uses Microsoft "gamepass" accounts to catch dropping usernames.
+
+>Proxy Dependent & Asynchronous
