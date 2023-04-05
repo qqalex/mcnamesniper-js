@@ -75,13 +75,14 @@ async function _snipeAdd(auth, username, startTime, endTime, res) {
     }
     else {
         const bearerTokens = await msaDB.getValidBearerTokens(endTime);
-        exec(`./turbo --username=${username} --start-time=${startTime} --stop-time=${endTime} --tokens='{${bearerTokens}}' --proxy-url=http://proxy.example.com:8080 --threads=10`)
+        exec(`./turbo -username=${username} -start-time=${startTime} -stop-time=${endTime} -tokens='{${bearerTokens}}' -proxy-url=http://proxy.example.com:8080 -threads=10`);
+        res.status(200);
+        res.send('Snipe added');
     }
 }
 
 async function _msaAdd(email, password, bearerToken, bearerExpiry, gamePassExpiration, res) {
     const id = await msaDB.numberOfMSA();
-    console.log(id);
     const msAccount = new msaDB.MSAccount(id, email, password, bearerToken, bearerExpiry, gamePassExpiration);
     await msaDB.write(msAccount);
     res.status(200);
@@ -125,8 +126,8 @@ app.post('/msa/add', (req, res) => {
 app.post('/snipe/add', (req, res) => {
     const auth = req.header('Token');
     const username = req.header('Username');
-    const startTime = req.header('Start Time');
-    const endTime = req.header('End Time');
+    const startTime = req.header('StartTime');
+    const endTime = req.header('EndTime');
 
     _snipeAdd(auth, username, startTime, endTime, res);
 })
