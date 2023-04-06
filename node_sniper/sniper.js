@@ -1,8 +1,12 @@
 const axios = require('axios');
 const HttpsProxyAgent = require('https-proxy-agent');
+const fs = require('fs').promises;
+require('dotenv').config();
 
-const proxy = 'http://minecat:5d86f4-e1a8a9-a211fd-5f7e38-23741a@usa.rotating.proxyrack.net:9000';
-const targetUrl = 'https://api.minecraftservices.com/minecraft/profile/';
+const proxy = process.env.PROXY_AUTH;
+const targetUrl = process.env.ENDPOINT;
+
+console.log(proxy, targetUrl)
 
 const agent = new HttpsProxyAgent(proxy);
 
@@ -53,7 +57,6 @@ function _generateConfigs(bearerTokens, username, targetUrl, agent) {
 function _start(startTime) {
 	const now = Date.now() / 1000;
 	if (now >= startTime) {
-		console.log(`Snipe started @ ${now}`);
 		return 0;
 	}
 	else {
@@ -67,7 +70,6 @@ function _stop(endTime) {
 		return 1;
 	}
 	else {
-		console.log(`Snipe stopped @ ${now}`);
 		return 0;
 	}
 }
@@ -86,7 +88,7 @@ async function snipe(username, bearerTokens, startTime, endTime) {
 	while (x) {
 		for (const config of configs) {
 			_sendRequest(config);
-			let x = _stop(endTime);
 		}
+		let x = _stop(endTime);
 	}
 }

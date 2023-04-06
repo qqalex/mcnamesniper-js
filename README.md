@@ -25,7 +25,7 @@
     bearer-expiry
     gamepass-expiry
 
-## Turbo (Go)
+## Sniper (Node)
 >A Minecraft namesniper that uses Microsoft "gamepass" accounts to catch dropping usernames.
 
 >Proxy Dependent & Asynchronous
