@@ -1,5 +1,6 @@
 # quickbrownfox
-Written entirely in JS
+Advanced Node.js Minecraft name sniper
+
 
 ## Discord Bot
 > Work in progress!
