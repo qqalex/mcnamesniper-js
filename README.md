@@ -1,12 +1,13 @@
 # quickbrownfox
+Written entirely in JS
 
-## Discord Bot (Node)
+## Discord Bot
 > Work in progress!
 
-## API (Node)
+## API
 > Work in progress!
 
-## Database (Node)
+## Databases
 
 ### Minecraft Profile Database
 > JSON Database that stores arguements
@@ -25,7 +26,7 @@
     bearer-expiry
     gamepass-expiry
 
-## Sniper (Node)
+## Sniper
 >A Minecraft namesniper that uses Microsoft "gamepass" accounts to catch dropping usernames.
 
 >Proxy Dependent & Asynchronous
