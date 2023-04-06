@@ -1,14 +1,17 @@
 const axios = require('axios');
 const HttpsProxyAgent = require('https-proxy-agent');
-const fs = require('fs').promises;
 require('dotenv').config();
 
-const proxy = process.env.PROXY_AUTH;
-const targetUrl = process.env.ENDPOINT;
 
-console.log(proxy, targetUrl)
+class Env {
+	constructor(username) {
+		this.username = username;
+		this.proxy = process.env.PROXY_AUTH;
+		this.targetUrl = process.env.ENDPOINT;
+		this.agent = new HttpsProxyAgent(this.proxy);
+	}
+}
 
-const agent = new HttpsProxyAgent(proxy);
 
 async function _sendRequest(config) {
 	try {
@@ -35,18 +38,19 @@ async function _sendRequestAwait(config) {
 	}
 }
 
-function _generateConfigs(bearerTokens, username, targetUrl, agent) {
+function _generateConfigs(bearerTokens, username) {
+	Environment = new Env(username);
 	const configArray = [];
 	for (const token of bearerTokens) {
 		const config = {
 			method: 'POST',
-			url: targetUrl,
-			httpAgent: agent,
-			httpsAgent: agent,
+			url: Environment.targetUrl,
+			httpAgent: Environment.agent,
+			httpsAgent: Environment.agent,
 			responseType: 'stream', // to avoid buffering the response
 			headers: {
-			'Authorization': `Bearer ${token}`,
-			'profileName': `${username}`
+				'Authorization': `Bearer ${token}`,
+				'profileName': `${this.usernaem}`
 			}
 		};
 		configArray.push(config);
@@ -75,7 +79,8 @@ function _stop(endTime) {
 }
 
 async function snipe(username, bearerTokens, startTime, endTime) {
-	const configs = _generateConfigs(bearerTokens, username, targetUrl, agent);
+	
+	const configs = _generateConfigs(bearerTokens, username);
 
 	// start the snipe
 	let y = 1;
@@ -92,3 +97,5 @@ async function snipe(username, bearerTokens, startTime, endTime) {
 		let x = _stop(endTime);
 	}
 }
+
+snipe()
