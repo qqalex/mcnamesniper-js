@@ -1,12 +1,8 @@
 # quickbrownfox
 Advanced Node.js Minecraft name sniper
 
-
-## Discord Bot
-> Work in progress!
-
 ## API
-> Work in progress!
+> Operates the sniper & databases through API routes
 
 ## Databases
 
