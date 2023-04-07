@@ -1,3 +1,8 @@
+// Closed source, do not distribute
+// Sniper for internal "Quick Brown Fox" API
+// Written by Alex "qqalex" of Minecat.NET
+
+
 const axios = require('axios');
 const HttpsProxyAgent = require('https-proxy-agent');
 require('dotenv').config();
@@ -98,4 +103,5 @@ async function snipe(username, bearerTokens, startTime, endTime) {
 	}
 }
 
-snipe()
+// username, bearerTokens, startTime, endTime
+snipe(process.argv[2], process.argv[3], process.argv[4], process.argv[5]);

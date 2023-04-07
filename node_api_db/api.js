@@ -3,24 +3,24 @@
 // Written by Alex "qqalex" of Minecat.NET
 
 
+require('dotenv').config();
+const profileDB = require('./profile');
+const msaDB = require('./msa');
 const { exec } = require('child_process');
-const profileDB = require('./profileDB.js');
-const msaDB = require('./msaDB.js');
-
 const fs = require('fs');
 const https = require('https');
 const express = require('express');
 const app = express();
 
 
+const port = process.env.PORT;
+const apiAuthToken = process.env.API_TOKEN;
+
 const options = {
-    key: fs.readFileSync('C:/Users/alex/Documents/apiCert/key.pem'),
-    cert: fs.readFileSync('C:/Users/alex/Documents/apiCert/cert.pem')
+    key: fs.readFileSync('ssl/key.pem'),
+    cert: fs.readFileSync('ssl/cert.pem')
 }
 const server = https.createServer(options, app);
-
-const port = 443;
-const apiAuthToken = 'HGkFWnMyfX8wMACS';
 
 
 function _authCheck(auth) {
@@ -68,14 +68,13 @@ async function _profileRead(auth, username, res) {
     }
 }
 
-async function _snipeAdd(auth, username, startTime, endTime, res) {
+async function _snipeAdd(auth, username, bearerTokens, startTime, endTime, res) {
     if (!_authCheck(auth)) {
         res.status(401);
         res.send('Auth fail');
     }
     else {
-        const bearerTokens = await msaDB.getValidBearerTokens(endTime);
-        exec(`./turbo -username=${username} -start-time=${startTime} -stop-time=${endTime} -tokens='{${bearerTokens}}' -proxy-url=http://proxy.example.com:8080 -threads=10`);
+        exec(`node sniper ${username} ${bearerTokens} ${startTime} ${endTime}`)
         res.status(200);
         res.send('Snipe added');
     }
@@ -130,15 +129,6 @@ app.post('/snipe/add', (req, res) => {
     const endTime = req.header('EndTime');
 
     _snipeAdd(auth, username, startTime, endTime, res);
-})
-
-app.post('/snipe/remove', (req, res) => {
-    const auth = req.header('Token');
-    const username = req.header('Username');
-})
-
-app.post('/snipe/list', (req, res) => {
-    const auth = req.header('Token');
 })
 
 

@@ -1,15 +1,15 @@
 // Closed source, do not distribute
-// Profile database for internal "Quick Brown Fox" API
+// MSA database for internal "Quick Brown Fox" API
 // Written by Alex "qqalex" of Minecat.NET
 
 
 const fs = require('fs').promises;
-const arrayBearerTokens = [];
 
-
-async function numberOfMSA() {
-    const files = await fs.readdir('msaccounts');
-    return files.length+1;
+class MSAccounts {
+    constructor() {
+        this.array = [];
+        this.valid = [];
+    }
 }
 
 class MSAccount {
@@ -64,24 +64,30 @@ async function write(profile) {
     }
 }
 
-async function _loadBearerTokens() {
+async function numberOfMSA() {
+    const files = await fs.readdir('msaccounts');
+    return files.length+1;
+}
+
+async function _loadBearerTokens(array) {
     const limit = await numberOfMSA();
     for (i=0; i<limit; i++) {
         const msaAtIndex = await read(i);
-        arrayBearerTokens.push(msaAtIndex);
+        array.push(msaAtIndex);
+        return array
     }
 }
 
-async function getValidBearerTokens(endTime) {
-    _loadBearerTokens();
-    const validBearerTokens = [];
-    for (i=0; i<arrayBearerTokens.length; i++) {
-        if (arrayBearerTokens[i].bearerExpiry > endTime) {
-            validBearerTokens.push(arrayBearerTokens[i].bearerToken);
+async function getBearerTokens(endTime) {
+    const accounts = new MSAccounts();
+    accounts.array = await _loadBearerTokens(accounts.array);
+    for (MSAccount in accounts.array) {
+        if (MSAccount.bearerExpiry > endTime) {
+            accounts.valid.push(MSAccount.bearerToken);
         }
     }
-    return validBearerTokens;
+    return accounts;
 }
 
 
-module.exports = { MSAccount, write, read, getValidBearerTokens, numberOfMSA };
+module.exports = { MSAccount, read, write, getBearerTokens, numberOfMSA };
