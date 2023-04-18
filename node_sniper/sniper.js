@@ -2,10 +2,10 @@
 // Sniper for internal "Quick Brown Fox" API
 // Written by Alex "qqalex" of Minecat.NET
 
+require('dotenv').config();
 
 const axios = require('axios');
 const HttpsProxyAgent = require('https-proxy-agent');
-require('dotenv').config();
 
 
 class Env {

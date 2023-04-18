@@ -14,12 +14,12 @@ class MSAccounts {
 
 class MSAccount {
     constructor(id, email, password, bearerToken, bearerExpiry, gamePassExpiration) {
-        this.id = id;
-        this.email = email;
-        this.password = password;
-        this.bearerToken = bearerToken;
-        this.bearerExpiry = bearerExpiry; // unix timestamp
-        this.gamePassExpiration = gamePassExpiration; // unix timestamp
+        this.id = id;                                   // int (index)
+        this.email = email;                             // string
+        this.password = password;                       // string
+        this.bearerToken = bearerToken;                 // string
+        this.bearerExpiry = bearerExpiry;               // unix timestamp
+        this.gamePassExpiration = gamePassExpiration;   // unix timestamp
     }
 }
 

@@ -14,6 +14,7 @@ class profile {
     }
 }
 
+
 function _error(err) {
     if (err) {
         console.error(err);
@@ -55,5 +56,16 @@ async function write(profile) {
     }
 }
 
+async function remove(username) {
+    const bool = await _check(username);
+    if (bool) {
+        fs.unlink(`profiles/${username}.json`);
+        return true;
+    }
+    else {
+        return false;
+    }
+}
 
-module.exports = { profile, write, read };
+
+module.exports = { profile, write, read, remove };

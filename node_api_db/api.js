@@ -2,15 +2,19 @@
 // API for internal "Quick Brown Fox" API
 // Written by Alex "qqalex" of Minecat.NET
 
-
+// General imports
 require('dotenv').config();
-const profileDB = require('./profile');
-const msaDB = require('./msa');
-const { exec } = require('child_process');
 const fs = require('fs');
+const { exec } = require('child_process');
+
+// API Related imports
 const https = require('https');
 const express = require('express');
 const app = express();
+
+// Custom imports
+const profileDB = require('./profile');
+const msaDB = require('./msa');
 
 
 const port = process.env.PORT;
@@ -46,6 +50,23 @@ async function _profileAdd(auth, username, startTime, endTime, res) {
         }
         else {
             res.send(`Profile "${username}" created`);
+        }
+    }
+}
+
+async function _profileRemove(auth, username, res) {
+    if (!_authCheck(auth)) {
+        res.status(401);
+        res.send('Auth fail');
+    }
+    else {
+        const bool = await profileDB.remove(username);
+        res.status(200);
+        if (!bool) {
+            res.send(`Profile "${username}" doesn't exist`);
+        }
+        else {
+            res.send(`Profile "${username}" deleted`);
         }
     }
 }
@@ -96,6 +117,13 @@ app.post('/profile/add', (req, res) => {
     const endTime = req.header('EndTime');
 
     _profileAdd(auth, username, startTime, endTime, res);
+})
+
+app.post('/profile/remove', (req, res) => {
+    const auth = req.header('Token');
+    const username = req.header('Username');
+
+    _profileRemove(auth, username, res);
 })
 
 app.get('/profile/read', (req, res) => {
