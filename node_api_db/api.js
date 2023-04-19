@@ -95,7 +95,7 @@ async function _snipeAdd(auth, username, bearerTokens, startTime, endTime, res) 
         res.send('Auth fail');
     }
     else {
-        exec(`node sniper ${username} ${bearerTokens} ${startTime} ${endTime}`)
+        exec(`./sniper ${username} ${bearerTokens} ${startTime} ${endTime}`)
         res.status(200);
         res.send('Snipe added');
     }
