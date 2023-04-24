@@ -19,6 +19,7 @@ const msaDB = require('./msa');
 
 const port = process.env.PORT;
 const apiAuthToken = process.env.API_TOKEN;
+const bearerEndpoint = process.env.BEARER_GET_ENDPOINT_URL;
 
 const options = {
     key: fs.readFileSync('ssl/key.pem'),
@@ -89,13 +90,13 @@ async function _profileRead(auth, username, res) {
     }
 }
 
-async function _snipeAdd(auth, username, bearerTokens, startTime, endTime, res) {
+async function _snipeAdd(auth, username, bearerGetURL, startTime, endTime, res) {
     if (!_authCheck(auth)) {
         res.status(401);
         res.send('Auth fail');
     }
     else {
-        exec(`./sniper ${username} ${bearerTokens} ${startTime} ${endTime}`)
+        exec(`./sniper ${username} ${startTime} ${endTime} ${bearerGetURL}`)
         res.status(200);
         res.send('Snipe added');
     }
@@ -156,7 +157,22 @@ app.post('/snipe/add', (req, res) => {
     const startTime = req.header('StartTime');
     const endTime = req.header('EndTime');
 
-    _snipeAdd(auth, username, startTime, endTime, res);
+    _snipeAdd(auth, username, bearerEndpoint, startTime, endTime, res);
+})
+
+app.get('/bearers/get', (req, res) => {
+    const auth = req.header('Token');
+
+    if (!_authCheck(auth)) {
+        res.status(401);
+        res.send('Auth fail');
+    }
+    else {
+        msaDB.getBearerTokens().then((bearers) => {
+            res.status(200);
+            res.send(bearers);
+        })
+    }
 })
 
 

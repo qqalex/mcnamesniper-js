@@ -86,7 +86,7 @@ async function getBearerTokens(endTime) {
             accounts.valid.push(MSAccount.bearerToken);
         }
     }
-    return accounts;
+    return accounts.valid;
 }
 
 
