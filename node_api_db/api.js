@@ -37,6 +37,13 @@ function _authCheck(auth) {
     }
 }
 
+function _getBearerURL(req) {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const port = req.socket.remotePort;
+    const bearerURL = `https://${ip}/${bearerEndpoint}`;
+    return bearerURL;
+}
+
 async function _profileAdd(auth, username, startTime, endTime, res) {
     if (!_authCheck(auth)) {
         res.status(401);
@@ -157,18 +164,23 @@ app.post('/snipe/add', (req, res) => {
     const startTime = req.header('StartTime');
     const endTime = req.header('EndTime');
 
-    _snipeAdd(auth, username, bearerEndpoint, startTime, endTime, res);
+    const bearerURL = _getBearerURL(req);
+    console.log(bearerURL);
+
+    _snipeAdd(auth, username, bearerURL, startTime, endTime, res);
 })
 
 app.get('/bearers/get', (req, res) => {
     const auth = req.header('Token');
+    const endTime = req.header('EndTime');
 
     if (!_authCheck(auth)) {
         res.status(401);
         res.send('Auth fail');
     }
     else {
-        msaDB.getBearerTokens().then((bearers) => {
+        msaDB.getBearerTokens(endTime).then((bearers) => {
+            console.log(bearers);
             res.status(200);
             res.send(bearers);
         })

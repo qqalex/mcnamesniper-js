@@ -44,7 +44,7 @@ async function read(username) {
     const bool = await _check(username);
     if (bool) {
         const jsonString = await fs.readFile(`msaccounts/${username}.json`, 'utf8', (err) => { _error(err); });
-        const readProfile = JSON.parse(jsonString);
+        const readProfile = await JSON.parse(jsonString);
         return readProfile;
     }
     else {
@@ -71,19 +71,19 @@ async function numberOfMSA() {
 
 async function _loadBearerTokens(array) {
     const limit = await numberOfMSA();
-    for (i=0; i<limit; i++) {
-        const msaAtIndex = await read(i);
+    for (let i=1; i<limit; i++) {
+        let msaAtIndex = await read(i);
         array.push(msaAtIndex);
-        return array
     }
+    return array;
 }
 
 async function getBearerTokens(endTime) {
     const accounts = new MSAccounts();
     accounts.array = await _loadBearerTokens(accounts.array);
-    for (MSAccount in accounts.array) {
-        if (MSAccount.bearerExpiry > endTime) {
-            accounts.valid.push(MSAccount.bearerToken);
+    for (i in accounts.array) {
+        if (parseInt(accounts.array[i].bearerExpiry) > parseInt(endTime)) {
+            accounts.valid.push(accounts.array[i].bearerToken);
         }
     }
     return accounts.valid;
