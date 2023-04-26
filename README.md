@@ -1,5 +1,5 @@
 # quickbrownfox
-Advanced Node.js Minecraft name sniper
+Advanced Node.js & Rust Minecraft name sniper
 
 ## Unmaintained
 I no longer can maintain this project. 90% complete.
