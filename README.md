@@ -1,7 +1,7 @@
 # quickbrownfox
 Advanced Node.js Minecraft name sniper
 
-## Deprecated
+## Unmaintained
 I no longer can maintain this project. 90% complete.
 
 ## API
