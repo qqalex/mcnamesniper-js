@@ -1,8 +1,8 @@
 # quickbrownfox
-Advanced Minecraft name sniper written in Node.js & Rust
+~~Advanced~~ Minecraft name sniper written in Node.js & Rust
 
 ## Unmaintained
-I no longer can maintain this project. 90% complete.
+No longer maintained and abandoned. It won't work
 
 ## API
 > Operates the sniper & databases through API routes
