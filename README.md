@@ -1,5 +1,5 @@
 # quickbrownfox
-~~Advanced~~ Minecraft name sniper written in Node.js & Rust
+Minecraft name sniper written in Node.js
 
 ## Unmaintained
 No longer maintained and abandoned. It won't work
