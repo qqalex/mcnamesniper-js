@@ -1,4 +1,4 @@
-# quickbrownfox
+# mcnamesniper-js
 Minecraft name sniper written in Node.js
 
 ## Unmaintained
