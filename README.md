@@ -2,7 +2,7 @@
 Minecraft name sniper written in Node.js
 
 ## Unmaintained
-No longer maintained and abandoned. It won't work
+No longer maintained. It won't work.
 
 ## API
 > Operates the sniper & databases through API routes
